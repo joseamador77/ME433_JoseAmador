@@ -158,3 +158,49 @@ void drawFPS(unsigned short x, unsigned short y, unsigned short color){
         i++;
     } 
 }
+void drawBarX(unsigned short x, unsigned short y, unsigned short color, signed short grav){
+    int constantWidth = 5;
+    int i = 0;
+    int j = 0;
+    
+    if (grav < 0){//go up
+        double height = grav/16383.0 * -130;
+        for(i = 0;i<constantWidth;i++){
+            for(j = 0;j<height;j++){
+                LCD_drawPixel(x+i,y-j,color);   
+            }   
+        }
+    }else{//go down
+        double height = grav/16383.0 * 130;
+        for(i = 0;i<constantWidth;i++){
+            for(j = 0;j<height;j++){
+                LCD_drawPixel(x+i,y+j,color);   
+            }   
+        }
+    }
+    
+    
+    
+        
+}
+void drawBarY(unsigned short x, unsigned short y, unsigned short color, signed short grav){
+    int constantWidth = 5;
+    int i = 0;
+    int j = 0;
+    
+    if (grav < 0){//go left
+        double height = grav/16383.0 * -130;
+        for(i = 0;i<height;i++){
+            for(j = 0;j<constantWidth;j++){
+                LCD_drawPixel(x-i,y+j,color);   
+            }   
+        }
+    }else{//go right
+        double height = grav/16383.0 * 130;
+        for(i = 0;i<height;i++){
+            for(j = 0;j<constantWidth;j++){
+                LCD_drawPixel(x+i,y+j,color);   
+            }   
+        }
+    }
+}

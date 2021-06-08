@@ -72,22 +72,24 @@ int main() {
     signed short imu_output[dataPoints];
     while (1) {
         
-        
         imu_read(IMU_OUT_TEMP_L,imu_output,dataPoints);
-
+        signed short accelX = imu_output[4];
+        signed short accelY = imu_output[5];
         LCD_clearScreen(BLUE);
            
         _CP0_SET_COUNT(0); //init time
+        drawBarX(120,150,MAGENTA,accelX);
+        drawBarY(120,150,YELLOW,accelY);
         char m[240];
-        sprintf(m,"GYROSCOPE: %d %d %d ",imu_output[1],imu_output[2],imu_output[3]);
+        sprintf(m,"GYROSCOPE: %d %d %d ",imu_output[1],imu_output[2],imu_output[3]);//x y z
+        drawString(28,50,MAGENTA,m);
+        sprintf(m,"ACCELERATION: %d %d %d ",imu_output[4],imu_output[5],imu_output[6]);//x y z
+        drawString(28,70,MAGENTA,m);
+        sprintf(m,"TEMPERATURE: %d",imu_output[0]);//temp
         drawString(28,90,MAGENTA,m);
-        sprintf(m,"ACCELERATION: %d %d %d ",imu_output[4],imu_output[5],imu_output[6]);
-        drawString(28,120,MAGENTA,m);
-        sprintf(m,"TEMPERATURE: %d",imu_output[0]);
-        drawString(28,150,MAGENTA,m);
         
         sprintf(m,"FPS is %f", 24000000.0/_CP0_GET_COUNT());//final time
-        drawString(28,67,MAGENTA,m); 
+        drawString(28,30,MAGENTA,m); 
    
        LATAINV = 0b10000; //HEARTBEAT 
        _CP0_SET_COUNT(0);

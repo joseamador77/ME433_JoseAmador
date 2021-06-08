@@ -1,8 +1,11 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
+#include "font.h"
+#include "spi.h"
+#include "ST7789.h"
+#include <stdio.h>
 #include "i2c_master_noint.h"
-
-
+#include "imu.h"
 
 // DEVCFG0
 #pragma config DEBUG = OFF // disable debugging
@@ -35,30 +38,6 @@
 #pragma config PMDL1WAY = OFF // allow multiple reconfigurations
 #pragma config IOL1WAY = OFF // allow multiple reconfigurations
 
-void setPin(unsigned char address, unsigned char regi, unsigned char value){
-    
-    i2c_master_start();
-    unsigned char writeAdd = (address << 1 )& 0b11111110;
-    i2c_master_send(writeAdd);//writeAdd
-    i2c_master_send(regi);
-    i2c_master_send(value);
-    i2c_master_stop();
-}  
-unsigned char readPin(unsigned char address, unsigned char regi){
-    //read a 
-    unsigned char writeAdd = (address << 1 )& 0b11111110;
-    unsigned char readAdd = (address<<1) | 0b00000001;
-    i2c_master_start();
-    i2c_master_send(writeAdd);//write add
-    i2c_master_send(regi);
-    i2c_master_restart();
-    i2c_master_send(readAdd); //read add
-    unsigned char readData = i2c_master_recv();
-    i2c_master_ack(1);
-    i2c_master_stop();
-    return readData;
-        
-}
 
 
 int main() {
@@ -82,36 +61,41 @@ int main() {
     TRISAbits.TRISA4  = 0;//A4 IS AN OUTPUT
     LATAbits.LATA4 = 0;//A4 IS OFF
 
-    //unsigned char wAdd = 0b01000000;
-    //unsigned char rAdd = 0b01000001;
-    unsigned char addy = 0b0100000;
-    
-    i2c_master_setup(); 
-    setPin(addy,0x00,0x00);//Set A to be output - IODIRA
-    setPin(addy,0x01,0xFF);//Set B to be input - IODIRB
-    
+   initSPI();
+   LCD_init();
+   i2c_master_setup(); 
+   imu_setup();
+   
     __builtin_enable_interrupts();
 
-    
-    
+    int dataPoints = 7;
+    signed short imu_output[dataPoints];
     while (1) {
         
         
-        unsigned char pinState = readPin(addy,0x13);// Read from GPIOB
-        if (pinState == 0x00){//button is pushed
-            setPin(addy,0x14,0xFF);//OLATA = 1 //turn on LED
-        }else{
-            setPin(addy,0x14,0x00);//OLATA = 0 //turn off LED
-        }
-             
-        
+        imu_read(IMU_OUT_TEMP_L,imu_output,dataPoints);
 
-       LATAINV = 0b10000; //on
+        LCD_clearScreen(BLUE);
+           
+        _CP0_SET_COUNT(0); //init time
+        char m[240];
+        sprintf(m,"GYROSCOPE: %d %d %d ",imu_output[1],imu_output[2],imu_output[3]);
+        drawString(28,90,MAGENTA,m);
+        sprintf(m,"ACCELERATION: %d %d %d ",imu_output[4],imu_output[5],imu_output[6]);
+        drawString(28,120,MAGENTA,m);
+        sprintf(m,"TEMPERATURE: %d",imu_output[0]);
+        drawString(28,150,MAGENTA,m);
+        
+        sprintf(m,"FPS is %f", 24000000.0/_CP0_GET_COUNT());//final time
+        drawString(28,67,MAGENTA,m); 
+   
+       LATAINV = 0b10000; //HEARTBEAT 
        _CP0_SET_COUNT(0);
-       while(_CP0_GET_COUNT() <= 24000000*0.5){ }// 1/100 of a second delay
+       while(_CP0_GET_COUNT() <= 24000000*0.5){ }
 
     }   
     
 
 }
+
 
